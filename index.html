@@ -21,7 +21,17 @@
 
     <style>
       .dollar-input {
-        width: 5em !important;
+        min-width: 3.5em !important;
+        max-width: 5em;
+      }
+
+      #tip-percentage-input {
+        min-width: 3em !important;
+      }
+
+      #add-person-input,
+      #add-item-input {
+        min-width: 7em;
       }
     </style>
 
@@ -65,7 +75,7 @@
                 <label for="tax-input" class="col-form-label">Tax</label>
               </th>
               <td id="tax">
-                <div class="input-group">
+                <div class="input-group flex-nowrap">
                   <span class="input-group-text">$</span>
                   <input
                     type="text"
@@ -88,56 +98,60 @@
                 <span id="total-tip" class="d-none">0.00</span>
                 <div class="row align-items-center gx-2 mb-1">
                   <div class="col">
-                    <div class="input-group">
-                      <div class="input-group-text">
-                        <input
-                          type="radio"
-                          id="tip-with-percentage"
-                          class="form-check-input mt-0"
-                          name="tip"
-                          aria-label="Use tip with percentage"
-                          checked
-                        />
+                    <div class="row align-items-center gx-2">
+                      <div class="col-auto">
+                        <div class="input-group flex-nowrap">
+                          <div class="input-group-text">
+                            <input
+                              type="radio"
+                              id="tip-with-percentage"
+                              class="form-check-input mt-0"
+                              name="tip"
+                              aria-label="Use tip with percentage"
+                              checked
+                            />
+                          </div>
+                          <input
+                            type="text"
+                            inputmode="numeric"
+                            pattern="[0-9]*"
+                            id="tip-percentage-input"
+                            class="form-control"
+                            value="15"
+                            aria-label="Tip percentage"
+                            size="2"
+                          />
+                          <span class="input-group-text">%</span>
+                        </div>
                       </div>
-                      <input
-                        type="text"
-                        inputmode="numeric"
-                        pattern="[0-9]*"
-                        id="tip-percentage-input"
-                        class="form-control"
-                        value="15"
-                        aria-label="Tip percentage"
-                        size="2"
-                      />
-                      <span class="input-group-text">%</span>
-                    </div>
-                  </div>
-                  <div class="col-auto">
-                    <div class="form-check">
-                      <input
-                        type="checkbox"
-                        id="include-tax-checkbox"
-                        class="form-check-input"
-                        aria-label="Include tax in total"
-                      />
-                      <label
-                        for="include-tax-checkbox"
-                        class="form-check-label"
-                      >
-                        With Tax
-                      </label>
+                      <div class="col-auto">
+                        <div class="form-check">
+                          <input
+                            type="checkbox"
+                            id="include-tax-checkbox"
+                            class="form-check-input"
+                            aria-label="Include tax in total"
+                          />
+                          <label
+                            for="include-tax-checkbox"
+                            class="form-check-label"
+                          >
+                            With Tax
+                          </label>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <div class="col-auto text-end">
                     =
-                    <span id="tip-total-with-percentage" class="fw-bold"
-                      >$0.00</span
-                    >
+                    <span id="tip-total-with-percentage" class="fw-bold">
+                      $0.00
+                    </span>
                   </div>
                 </div>
                 <div class="row align-items-center">
                   <div class="col">
-                    <div class="input-group">
+                    <div class="input-group flex-nowrap">
                       <div class="input-group-text">
                         <input
                           type="radio"
@@ -225,14 +239,12 @@
           <thead class="align-middle">
             <tr>
               <th></th>
-              <th colspan="2"></th>
-              <th class="item-unpaid-column d-none"></th>
-              <th>
+              <th colspan="3" class="text-end">
                 People
                 <span class="fw-normal">(<span id="num-people">0</span>)</span>
               </th>
               <th id="add-person-col">
-                <div class="input-group">
+                <div class="input-group flex-nowrap">
                   <input
                     type="text"
                     id="add-person-input"
@@ -254,37 +266,33 @@
             </tr>
             <tr id="items-per-person-row">
               <th></th>
-              <th colspan="2"></th>
-              <th class="item-unpaid-column d-none"></th>
-              <th>Items Price</th>
+              <th colspan="3" class="text-end">Items Price</th>
             </tr>
             <tr id="tax-tip-per-person-row">
               <th></th>
-              <th colspan="2"></th>
-              <th class="item-unpaid-column d-none"></th>
-              <th>Tax/Tip Price</th>
+              <th colspan="3" class="text-end">Tax/Tip Price</th>
             </tr>
             <tr id="total-per-person-row">
               <th></th>
-              <th colspan="2"></th>
-              <th class="item-unpaid-column d-none"></th>
-              <th>Total Price</th>
+              <th colspan="3" class="text-end">Total Price</th>
             </tr>
             <tr id="toggle-person-row">
               <td></td>
-              <th colspan="2">
+              <th>
                 Items
                 <span class="fw-normal">(<span id="num-items">0</span>)</span>
               </th>
-              <th class="item-unpaid-column text-center d-none">Unpaid</th>
+              <th class="text-center">
+                <span id="item-unpaid-column-label" class="d-none">Unpaid</span>
+              </th>
               <td></td>
             </tr>
           </thead>
           <tbody>
             <tr id="add-item-row">
               <td></td>
-              <td colspan="2">
-                <div class="input-group">
+              <td>
+                <div class="input-group flex-nowrap">
                   <input
                     type="text"
                     id="add-item-input"
@@ -303,7 +311,7 @@
                   </button>
                 </div>
               </td>
-              <td class="item-unpaid-column d-none"></td>
+              <td></td>
               <td></td>
             </tr>
           </tbody>
@@ -335,7 +343,6 @@
 
       const ITEM_ROW_CLASS = 'item-row';
       const ITEM_PRICE_INPUT_CLASS = 'item-price-input';
-      const ITEM_UNPAID_COLUMN_CLASS = 'item-unpaid-column';
 
       const CHECKBOX_CELL_CLASS = 'checkbox-cell';
       const CHECKBOX_CLASS = 'checkbox';
@@ -410,7 +417,7 @@
         const $taxInput = $('#tax-input');
         const tax = getDollarVal($taxInput);
         $taxInput.toggleClass(
-          'is-invalid',
+          'border-danger',
           (itemIds.length > 0 || personIds.length > 0) && tax === 0
         );
         const includeTax = $('#include-tax-checkbox').prop('checked');
@@ -465,13 +472,13 @@
           const $unpaid = $(`#${itemId}-unpaid`);
           $unpaid.html('');
           const $price = $(`#${itemId}-price`);
-          $price.removeClass('is-invalid');
+          $price.removeClass('border-danger');
 
           const itemCost = itemCosts[itemId];
           if (itemCost === 0) {
             if (payingPeople.length > 0) {
               // people are paying, but no price
-              $price.addClass('is-invalid');
+              $price.addClass('border-danger');
             }
             continue;
           }
@@ -500,8 +507,8 @@
           }
         }
 
-        // if there are any unpaid items, show the column; otherwise, hide it
-        $(`.${ITEM_UNPAID_COLUMN_CLASS}`).toggleClass('d-none', !anyUnpaid);
+        // if there are any unpaid items, show the label; otherwise, hide it
+        $(`#item-unpaid-column-label`).toggleClass('d-none', !anyUnpaid);
 
         // update the people's item prices
         let totalItemsPaid = 0;
@@ -511,7 +518,10 @@
           const personItemPrice = itemPricePerPerson[personId] ?? 0;
           $element.text(dollarStr(personItemPrice, true));
           // if the person is not paying anything for items
-          $element.toggleClass('text-warning', personItemPrice === 0);
+          $element.toggleClass(
+            'text-warning',
+            totalItemCost > 0 && personItemPrice === 0
+          );
           totalItemsPaid += personItemPrice;
         });
 
@@ -650,8 +660,12 @@
             id="${personId}"
             class="${PERSON_COL_CLASS} ${personId} text-center"
           >
-            <span id="${personId}-label"></span>
-            ${makeDeleteButton('person', personId, 'ms-1')}
+            <div class="d-flex align-items-center">
+              <div id="${personId}-label" class="w-100"></div>
+              <div class="w-auto ms-1">
+                ${makeDeleteButton('person', personId, 'ms-1')}
+              </div>
+            </div>
           </td>`;
       }
 
@@ -691,30 +705,29 @@
 
       function makeItemLabelCells(itemId) {
         return `
-          <td><span id="${itemId}-label"></div></td>
           <td>
-            <div class="input-group">
-              <span class="input-group-text">$</span>
-              <input
-                type="text"
-                inputmode="decimal"
-                id="${itemId}-price"
-                item="${itemId}"
-                class="form-control dollar-input ${ITEM_PRICE_INPUT_CLASS}"
-                value="0.00"
-                oninput="updateDollarValue(this);"
-                aria-label="Item Price"
-              />
+            <div class="row align-items-center gx-2 gy-1">
+              <div id="${itemId}-label" class="col"></div>
+              <div class="col-auto">
+                <div class="input-group flex-nowrap">
+                  <span class="input-group-text">$</span>
+                  <input
+                    type="text"
+                    inputmode="decimal"
+                    id="${itemId}-price"
+                    item="${itemId}"
+                    class="form-control dollar-input ${ITEM_PRICE_INPUT_CLASS}"
+                    value="0.00"
+                    oninput="updateDollarValue(this);"
+                    aria-label="Item Price"
+                  />
+                </div>
             </div>
           </td>`;
       }
 
       function makeItemUnpaidCell(itemId) {
-        return `
-          <td
-            id="${itemId}-unpaid"
-            class="${ITEM_UNPAID_COLUMN_CLASS} text-center d-none"
-          ></td>`;
+        return `<td id="${itemId}-unpaid" class="text-center"></td>`;
       }
 
       function makeCheckboxCellHtml(itemId, personId) {
@@ -959,16 +972,6 @@
 
           updateSummary();
         });
-
-        // seeders
-        /* for (const item of ['a', 'b', 'c']) {
-          $('#add-item-input').val(item);
-          $('#add-item-btn').click();
-        }
-        for (const name of ['a', 'b', 'c']) {
-          $('#add-person-input').val(name);
-          $('#add-person-btn').click();
-        } */
       });
     </script>
   </body>
