@@ -1,0 +1,13 @@
+.dollar-input {
+  min-width: 3.5em !important;
+  max-width: 5em;
+}
+
+#tip-percentage-input {
+  min-width: 3em !important;
+}
+
+#add-person-input,
+#add-item-input {
+  min-width: 7em;
+}
