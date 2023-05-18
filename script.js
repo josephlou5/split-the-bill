@@ -21,10 +21,14 @@ $.fn.mapEach = function (func) {
   return result;
 };
 
+function int(num) {
+  return Math.trunc(num);
+}
+
 function divmod(dividend, divisor) {
   dividend = Math.round(dividend);
-  const quotient = Math.trunc(dividend / divisor);
-  const rem = dividend - divisor * quotient;
+  const quotient = int(dividend / divisor);
+  const rem = int(dividend - divisor * quotient);
   return [quotient, rem];
 }
 
@@ -464,7 +468,7 @@ class Item {
     return Object.fromEntries(
       $(`.${Item.PRICE_INPUT_CLASS}`).mapEach(($input) => {
         const itemId = $input.attr('item');
-        const price = getDollarVal($input);
+        const price = getCentsVal($input);
         return [itemId, price];
       })
     );
@@ -585,26 +589,19 @@ function getVal($input) {
   return $input.val()?.trim() ?? '';
 }
 
-function getDollarVal($input) {
-  return getInts(getVal($input)) / 100;
+function getCentsVal($input) {
+  return getInts(getVal($input));
 }
 
 function getPercentageVal($input) {
+  // limit the percentage to [0, 100)
   return getInts(getVal($input)) % 100;
 }
 
-function roundDollars(dollars) {
-  const ROUND_UP = 1e-5;
-  let dollarsTrunc = Math.trunc(dollars * 100);
-  if (Math.trunc((dollars + ROUND_UP) * 100) > dollarsTrunc) {
-    dollarsTrunc += 1;
-  }
-  return dollarsTrunc / 100;
-}
-
-function dollarStr(dollars, dollarSign = false) {
-  // round to two decimal places
-  return (dollarSign ? '$' : '') + dollars.toFixed(2);
+function dollarStr(cents, dollarSign = false) {
+  const centsStr = int(cents).toString().padStart(3, '0');
+  const sign = dollarSign ? '$' : '';
+  return `${sign}${centsStr.slice(0, -2)}.${centsStr.slice(-2)}`;
 }
 
 function updateSummary() {
@@ -625,55 +622,54 @@ function updateSummary() {
 
   // get costs for each item
   const itemCosts = Item.getItemPrices();
-  const totalItemCost = Object.values(itemCosts).reduce(
-    (prev, curr) => prev + curr,
-    0
+  const totalItemCost = int(
+    Object.values(itemCosts).reduce((prev, curr) => prev + curr, 0)
   );
   // update total item cost
   $('#items-total').text(dollarStr(totalItemCost, true));
   console.log('costs:', itemCosts);
-  console.log('total cost:', totalItemCost);
+  console.log('total cost:', dollarStr(totalItemCost));
   console.groupEnd('items');
 
   console.group('globals');
 
   // find tax amount
   const $taxInput = $('#tax-input');
-  const tax = getDollarVal($taxInput);
+  const tax = getCentsVal($taxInput);
   $taxInput.toggleClass(
     'border-danger',
     (itemIds.length > 0 || personIds.length > 0) && tax === 0
   );
-  console.log('tax:', tax);
+  console.log('tax:', dollarStr(tax, true));
 
   // update total tip with percentage
   console.group('tip with percentage');
   const includeTax = $('#include-tax-checkbox').prop('checked');
   console.log('include tax:', includeTax);
-  const itemsAndTaxTotal = roundDollars(totalItemCost + (includeTax ? tax : 0));
-  const tipPercentage = getPercentageVal($('#tip-percentage-input')) / 100;
+  const itemsAndTaxTotal = int(totalItemCost + (includeTax ? tax : 0));
+  const tipPercentage = getPercentageVal($('#tip-percentage-input'));
   console.log('percentage:', tipPercentage);
-  const totalTipWithPercentage = roundDollars(itemsAndTaxTotal * tipPercentage);
+  const totalTipWithPercentage = int((itemsAndTaxTotal * tipPercentage) / 100);
   $('#tip-total-with-percentage').text(dollarStr(totalTipWithPercentage, true));
   if (includeTax) {
     console.log(
       'total tip with percentage:',
-      `(${totalItemCost} + ${tax}) * ${
-        tipPercentage * 100
-      }% = ${totalTipWithPercentage}`
+      `(${dollarStr(totalItemCost, true)} + ${dollarStr(tax, true)}) ` +
+        `* ${tipPercentage}% = ${dollarStr(totalTipWithPercentage, true)}`
     );
   } else {
     console.log(
       'total tip with percentage:',
-      `${totalItemCost} * ${tipPercentage * 100}% = ${totalTipWithPercentage}`
+      `${dollarStr(totalItemCost, true)} * ${tipPercentage}% ` +
+        `= ${dollarStr(totalTipWithPercentage, true)}`
     );
   }
   console.groupEnd('tip with percentage');
   // update total tip with dollars
   console.group('tip with dollars');
-  const totalTipWithDollars = getDollarVal($('#tip-dollars-input'));
+  const totalTipWithDollars = getCentsVal($('#tip-dollars-input'));
   $('#tip-total-with-dollars').text(dollarStr(totalTipWithDollars, true));
-  console.log('total tip with dollars:', totalTipWithDollars);
+  console.log('total tip with dollars:', dollarStr(totalTipWithDollars, true));
   console.groupEnd('tip with dollars');
   // update total tip
   const tipWithPercentage = $('#tip-with-percentage').prop('checked');
@@ -682,24 +678,35 @@ function updateSummary() {
     totalTip = totalTipWithPercentage;
     $('#tip-total-with-percentage').addClass('fw-bold');
     $('#tip-total-with-dollars').removeClass('fw-bold');
-    console.log('tip with percentage selected; total tip:', totalTip);
+    console.log(
+      'tip with percentage selected; total tip:',
+      dollarStr(totalTip, true)
+    );
   } else {
     totalTip = totalTipWithDollars;
     $('#tip-total-with-percentage').removeClass('fw-bold');
     $('#tip-total-with-dollars').addClass('fw-bold');
-    console.log('tip with dollars selected; total tip:', totalTip);
+    console.log(
+      'tip with dollars selected; total tip:',
+      dollarStr(totalTip, true)
+    );
   }
   $('#total-tip').text(dollarStr(totalTip));
 
-  const totalTaxTip = roundDollars(tax + totalTip);
-  console.log('tax + tip total:', `${tax} + ${totalTip} = ${totalTaxTip}`);
+  const totalTaxTip = int(tax + totalTip);
+  console.log(
+    'tax + tip total:',
+    `${dollarStr(tax, true)} + ${dollarStr(totalTip, true)} ` +
+      `= ${dollarStr(totalTaxTip, true)}`
+  );
 
   // update bill total
-  const billTotal = roundDollars(totalItemCost + totalTaxTip);
+  const billTotal = int(totalItemCost + totalTaxTip);
   $('#bill-total').text(dollarStr(billTotal, true));
   console.log(
     'bill total:',
-    `${totalItemCost} + ${tax} + ${totalTip} = ${billTotal}`
+    `${dollarStr(totalItemCost, true)} + ${dollarStr(tax, true)} ` +
+      `+ ${dollarStr(totalTip, true)} = ${dollarStr(billTotal, true)}`
   );
   console.groupEnd('globals');
 
@@ -744,25 +751,20 @@ function updateSummary() {
     console.log('people checked:', payingPeople);
 
     // calculate how much each person should pay
-    const [centsPerPerson, centsLeftOver] = divmod(
-      itemCost * 100,
-      payingPeople.length
-    );
-    const perPerson = centsPerPerson / 100;
+    const [perPerson, leftOver] = divmod(itemCost, payingPeople.length);
     console.log(
       'price per person:',
-      `${itemCost} / ${payingPeople.length} people = ${perPerson}`
+      `${dollarStr(itemCost, true)} / ${payingPeople.length} people ` +
+        `= ${dollarStr(perPerson, true)}`
     );
     for (const personId of payingPeople) {
       itemPricePerPerson[personId] += perPerson;
     }
-    if (centsLeftOver > 0) {
+    if (leftOver > 0) {
       // some leftover cost that no one is paying for
-      console.log('left over cost:', centsLeftOver / 100);
       anyUnpaid = true;
-      $unpaid.html(
-        makeBsBadge_('danger', dollarStr(centsLeftOver / 100, true))
-      );
+      console.log('left over cost:', dollarStr(leftOver, true));
+      $unpaid.html(makeBsBadge_('danger', dollarStr(leftOver, true)));
     }
 
     console.groupEnd(itemId);
@@ -775,7 +777,7 @@ function updateSummary() {
   let totalItemsPaid = 0;
   $(`.${Person.ITEM_PRICE_CLASS}`).forEach(($element) => {
     const personId = $element.attr('person');
-    const personItemPrice = roundDollars(itemPricePerPerson[personId] ?? 0);
+    const personItemPrice = int(itemPricePerPerson[personId] ?? 0);
     itemPricePerPerson[personId] = personItemPrice;
     $element.text(dollarStr(personItemPrice, true));
     // if the person is not paying anything for items
@@ -800,21 +802,18 @@ function updateSummary() {
       console.log('no people');
       totalTaxTipUnpaid = totalTaxTip;
     } else {
-      const [centsPerPerson, centsLeftOver] = divmod(
-        totalTaxTip * 100,
-        personIds.length
-      );
-      const taxTipPerPerson = roundDollars(centsPerPerson / 100);
+      const [taxTipPerPerson, leftOver] = divmod(totalTaxTip, personIds.length);
       console.log(
         'tax/tip per person:',
-        `${totalTaxTip} / ${personIds.length} people = ${taxTipPerPerson}`
+        `${dollarStr(totalTaxTip, true)} / ${personIds.length} people ` +
+          `= ${dollarStr(taxTipPerPerson, true)}`
       );
       for (const personId of personIds) {
         taxTipPricePerPerson[personId] = taxTipPerPerson;
       }
-      totalTaxTipUnpaid = roundDollars(centsLeftOver / 100);
+      totalTaxTipUnpaid = leftOver;
     }
-    totalTaxTipPaid = roundDollars(totalTaxTip - totalTaxTipUnpaid);
+    totalTaxTipPaid = int(totalTaxTip - totalTaxTipUnpaid);
   } else {
     // split proportionally
     console.log('splitting tax/tip proportionally');
@@ -828,7 +827,8 @@ function updateSummary() {
         const proportion = personItemPrice / totalItemsPaid;
         console.log(
           'proportion:',
-          `${personItemPrice} / ${totalItemsPaid} = ${proportion}`
+          `${dollarStr(personItemPrice, true)} ` +
+            `/ ${dollarStr(totalItemsPaid, true)} = ${proportion}`
         );
         let personTaxTipPrice;
         if (proportion === 0) {
@@ -836,11 +836,13 @@ function updateSummary() {
         } else if (proportion === 1) {
           personTaxTipPrice = totalTaxTip;
         } else {
-          personTaxTipPrice = roundDollars(proportion * totalTaxTip);
+          personTaxTipPrice = int(proportion * totalTaxTip);
         }
         console.log(
           'tax/tip contribution:',
-          `${totalTaxTip} * ${proportion * 100}% = ${personTaxTipPrice}`
+          `${dollarStr(totalTaxTip, true)} ` +
+            `* ${(proportion * 100).toFixed(3)}% ` +
+            `= ${dollarStr(personTaxTipPrice, true)}`
         );
         taxTipPricePerPerson[personId] = personTaxTipPrice;
         totalTaxTipPaid += personTaxTipPrice;
@@ -849,17 +851,15 @@ function updateSummary() {
     } else {
       console.log("no one has paid for items, so can't split tax/tip");
     }
-    totalTaxTipPaid = roundDollars(totalTaxTipPaid);
-    totalTaxTipUnpaid = roundDollars(totalTaxTip - totalTaxTipPaid);
+    totalTaxTipPaid = int(totalTaxTipPaid);
+    totalTaxTipUnpaid = int(totalTaxTip - totalTaxTipPaid);
   }
-  console.log('tax/tip paid:', totalTaxTipPaid);
-  console.log('tax/tip unpaid:', totalTaxTipUnpaid);
   console.groupEnd('calculating tax/tip price per person');
 
   // update the people's tax/tip prices
   $(`.${Person.TAX_TIP_PRICE_CLASS}`).forEach(($element) => {
     const personId = $element.attr('person');
-    const personTaxTipPrice = roundDollars(taxTipPricePerPerson[personId] ?? 0);
+    const personTaxTipPrice = int(taxTipPricePerPerson[personId] ?? 0);
     taxTipPricePerPerson[personId] = personTaxTipPrice;
     $element.text(dollarStr(personTaxTipPrice, true));
   });
@@ -870,7 +870,7 @@ function updateSummary() {
   const totalPricePerPerson = {};
   $(`.${Person.TOTAL_PRICE_CLASS}`).forEach(($element) => {
     const personId = $element.attr('person');
-    const personTotalPrice = roundDollars(
+    const personTotalPrice = int(
       (itemPricePerPerson[personId] ?? 0) +
         (taxTipPricePerPerson[personId] ?? 0)
     );
@@ -886,15 +886,11 @@ function updateSummary() {
   let anyTotalUnpaid = false;
   const summaryTotals = {};
   for (const [idPrefix, paid, unpaid] of [
-    [
-      'items-total',
-      totalItemsPaid,
-      roundDollars(totalItemCost - totalItemsPaid),
-    ],
+    ['items-total', totalItemsPaid, int(totalItemCost - totalItemsPaid)],
     ['tax-tip', totalTaxTipPaid, totalTaxTipUnpaid],
-    ['bill-total', totalPaid, roundDollars(billTotal - totalPaid)],
+    ['bill-total', totalPaid, int(billTotal - totalPaid)],
   ]) {
-    summaryTotals[idPrefix] = { paid, unpaid };
+    summaryTotals[idPrefix] = { paid: paid / 100, unpaid: unpaid / 100 };
     $(`#${idPrefix}-paid`).text(dollarStr(paid, true));
     if (unpaid === 0) {
       $(`#${idPrefix}-unpaid`).html('');
@@ -916,7 +912,7 @@ function updateSummary() {
 
 function updateDollarValue(element) {
   const $input = $(element);
-  $input.val(dollarStr(getDollarVal($input)));
+  $input.val(dollarStr(getCentsVal($input)));
   updateSummary();
 }
 
