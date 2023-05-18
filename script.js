@@ -5,6 +5,9 @@ Array.fromRange = (length, func = null) =>
     .fill(null)
     .map((value, index) => (func ? func(index) : index));
 
+Object.fromArray = (array, func) =>
+  Object.fromEntries(array.map((value, index) => [value, func(value, index)]));
+
 $.fn.getId = function () {
   return this.get(0)?.id;
 };
@@ -292,9 +295,7 @@ class Checkbox {
    * for that item.
    */
   static findAllChecked() {
-    const checked = Object.fromEntries(
-      Item.getIds().map((itemId) => [itemId, []])
-    );
+    const checked = Object.fromArray(Item.getIds(), () => []);
     $(`.${Checkbox.CHECKBOX_CLASS}`).forEach(($button) => {
       const checkbox = new Checkbox($button);
       if (!checkbox.isChecked()) return;
@@ -716,9 +717,7 @@ function updateSummary() {
 
   // calculate the amount per person for each item
   console.groupCollapsed('calculating price per item');
-  const itemPricePerPerson = Object.fromEntries(
-    personIds.map((personId) => [personId, 0])
-  );
+  const itemPricePerPerson = Object.fromArray(personIds, () => 0);
   let anyUnpaid = false;
   for (const [itemId, payingPeople] of Object.entries(checked)) {
     console.group(itemId);
