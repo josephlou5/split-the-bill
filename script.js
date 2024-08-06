@@ -174,10 +174,10 @@ class Checkbox {
   static CHECKED_ACCENT_ = "success";
   static UNCHECKED_ACCENT_ = "outline-danger";
 
-  static makeEntireToggleButton(type, id) {
+  static makeEntireToggleButton(type, id, freezeCol = false) {
     return makeHtml_(
       "td",
-      { class: [id, "text-center"] },
+      { class: [id, "text-center"].concat(freezeCol ? ["freeze-col"] : []) },
       makeButton_(
         {
           class: ["btn", "btn-sm", "btn-outline-secondary"],
@@ -483,48 +483,65 @@ class Item {
   }
 
   makeDeleteCell_() {
-    return makeHtml_("td", makeDeleteButton("Item", this.itemId));
-  }
-
-  makeLabelCell_() {
     return makeHtml_(
       "td",
-      makeHtml_(
-        "div",
-        { class: ["row", "align-items-center", "gx-2", "gy-1"] },
-        [
-          makeHtml_("div", { id: `${this.itemId}-label`, class: ["col"] }),
-          makeHtml_(
-            "div",
-            { class: ["col-auto"] },
-            makeHtml_("div", { class: ["input-group", "flex-nowrap"] }, [
-              makeHtml_("span", { class: ["input-group-text"] }, "$"),
-              makeHtml_("input", {
-                "type": "text",
-                "inputmode": "decimal",
-                "id": `${this.itemId}-price`,
-                "item": this.itemId,
-                "class": [
-                  "form-control",
-                  "dollar-input",
-                  Item.PRICE_INPUT_CLASS,
-                ],
-                "value": "0.00",
-                "oninput": "updateDollarValue(this);",
-                "aria-label": "Item Price",
-              }),
-            ])
-          ),
-        ]
-      )
+      { class: "freeze-col" },
+      makeDeleteButton("Item", this.itemId)
     );
   }
 
-  makeUnpaidCell_() {
-    return makeHtml_("td", {
-      id: `${this.itemId}-unpaid`,
-      class: ["text-center"],
-    });
+  makeLabelCell_() {
+    return makeHtml_("td", { class: "freeze-col" }, [
+      makeHtml_("div", { class: ["row", "align-items-center", "g-2"] }, [
+        makeHtml_("div", { id: `${this.itemId}-label`, class: ["col"] }),
+        makeHtml_("div", { class: ["col-auto"] }, [
+          makeHtml_(
+            "div",
+            { class: ["row"] },
+            makeHtml_(
+              "div",
+              { class: "col" },
+              makeHtml_("div", { class: ["input-group", "flex-nowrap"] }, [
+                makeHtml_("span", { class: ["input-group-text"] }, "$"),
+                makeHtml_("input", {
+                  "type": "text",
+                  "inputmode": "decimal",
+                  "id": `${this.itemId}-price`,
+                  "item": this.itemId,
+                  "class": [
+                    "form-control",
+                    "dollar-input",
+                    Item.PRICE_INPUT_CLASS,
+                  ],
+                  "value": "0.00",
+                  "oninput": "updateDollarValue(this);",
+                  "aria-label": "Item Price",
+                }),
+              ])
+            )
+          ),
+          makeHtml_(
+            "div",
+            {
+              id: `${this.itemId}-unpaid-container`,
+              class: ["row", "gx-1", "mt-1", "d-none"],
+            },
+            [
+              makeHtml_(
+                "div",
+                { class: ["col", "text-end", "fw-bold", "text-danger"] },
+                "Unpaid:"
+              ),
+              // will be populated with a badge when there is an unpaid amount
+              makeHtml_("div", {
+                id: `${this.itemId}-unpaid`,
+                class: ["col-auto"],
+              }),
+            ]
+          ),
+        ]),
+      ]),
+    ]);
   }
 
   add() {
@@ -535,10 +552,8 @@ class Item {
     cells.push(this.makeDeleteCell_());
     // item label (will be populated later)
     cells.push(this.makeLabelCell_());
-    // unpaid amount
-    cells.push(this.makeUnpaidCell_());
-    // toggle entire item
-    cells.push(Checkbox.makeEntireToggleButton("item", this.itemId));
+    // toggle entire item (with '.freeze-col' class)
+    cells.push(Checkbox.makeEntireToggleButton("item", this.itemId, true));
     // checkboxes
     for (const personId of Person.getIds()) {
       cells.push(Checkbox.makeCheckboxCell(this.itemId, personId));
@@ -720,11 +735,12 @@ function updateSummary() {
   // calculate the amount per person for each item
   console.groupCollapsed("calculating price per item");
   const itemPricePerPerson = Object.fromArray(personIds, () => 0);
-  let anyUnpaid = false;
   for (const [itemId, payingPeople] of Object.entries(checked)) {
     console.group(itemId);
 
-    const $unpaid = $(`#${itemId}-unpaid`);
+    const $unpaidContainer = $(`#${itemId}-unpaid-container`);
+    $unpaidContainer.addClass("d-none");
+    const $unpaid = $unpaidContainer.find(`#${itemId}-unpaid`);
     $unpaid.html("");
     const $price = $(`#${itemId}-price`);
     $price.removeClass("border-danger");
@@ -744,8 +760,8 @@ function updateSummary() {
     if (payingPeople.length === 0) {
       // no one is paying for this item
       console.log("no people checked");
-      anyUnpaid = true;
       $unpaid.html(makeBsBadge_("danger", dollarStr(itemCost, true)));
+      $unpaidContainer.removeClass("d-none");
       console.groupEnd(itemId);
       continue;
     }
@@ -763,15 +779,14 @@ function updateSummary() {
     }
     if (leftOver > 0) {
       // some leftover cost that no one is paying for
-      anyUnpaid = true;
       console.log("left over cost:", dollarStr(leftOver, true));
       $unpaid.html(makeBsBadge_("danger", dollarStr(leftOver, true)));
+      $unpaidContainer.removeClass("d-none");
     }
 
     console.groupEnd(itemId);
   }
   // if there are any unpaid items, show the label; otherwise, hide it
-  $(`#item-unpaid-column-label`).toggleClass("d-none", !anyUnpaid);
   console.groupEnd("calculating amount per item");
 
   // update the people's item prices
@@ -909,6 +924,31 @@ function updateSummary() {
   console.groupEnd("summary totals");
 
   console.groupEnd();
+
+  // do at the end of the update in case there were content changes that
+  // affected the height or width of cells
+  fixFrozenRowsAndColumns();
+}
+
+function fixFrozenRowsAndColumns() {
+  let topFrozenHeight = 0;
+  const $rows = $("#people-items-table thead .freeze-row");
+  $rows.forEach(($row) => {
+    $row.css("top", `${topFrozenHeight}px`);
+    topFrozenHeight += $row.get(0).offsetHeight;
+  });
+  $rows
+    .add(`.${Item.ROW_CLASS}`)
+    .add("#add-item-row")
+    .forEach(($row) => {
+      // this calculation is technically the same for each row, but repeat it
+      // anyway (because i'm kinda lazy)
+      let leftFrozenWidth = 0;
+      $row.find(".freeze-col").forEach(($cell) => {
+        $cell.css("left", `${leftFrozenWidth}px`);
+        leftFrozenWidth += $cell.get(0).offsetWidth;
+      });
+    });
 }
 
 function updateDollarValue(element) {
@@ -989,4 +1029,14 @@ $(document).ready(() => {
     // clear the input
     $input.val("");
   });
+
+  $(window).trigger("resize");
+});
+
+$(window).on("resize", () => {
+  fixFrozenRowsAndColumns();
+
+  // set the height of the table container so vertical scrolling works with
+  // sticky table header
+  $("#people-items-table-container").height($(window).height());
 });

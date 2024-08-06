@@ -40,7 +40,7 @@
       <div class="mb-2">
         <span class="h1">Split the Bill</span>
         <span class="h6 fst-italic text-black text-opacity-50 ms-1">
-          (<a href="changelog.html" class="text-reset">v0.4</a>)
+          (<a href="changelog.html" class="text-reset">v0.5</a>)
         </span>
       </div>
 
@@ -234,12 +234,15 @@
         </table>
       </div>
 
-      <div class="table-responsive">
-        <table class="table table-striped table-hover align-middle w-auto">
-          <thead class="align-middle">
-            <tr>
-              <th></th>
-              <th colspan="3" class="text-end">
+      <div id="people-items-table-container" class="table-responsive">
+        <table
+          id="people-items-table"
+          class="table table-striped table-hover align-middle w-auto"
+        >
+          <thead class="freeze-thead align-middle">
+            <tr class="freeze-row">
+              <th class="freeze-col"></th>
+              <th colspan="2" class="freeze-col text-end">
                 People
                 <span class="fw-normal">(<span id="num-people">0</span>)</span>
               </th>
@@ -264,34 +267,31 @@
                 </div>
               </th>
             </tr>
-            <tr id="items-per-person-row">
-              <th></th>
-              <th colspan="3" class="text-end">Items Price</th>
+            <tr id="items-per-person-row" class="freeze-row">
+              <th class="freeze-col"></th>
+              <th colspan="2" class="freeze-col text-end">Items Price</th>
             </tr>
-            <tr id="tax-tip-per-person-row">
-              <th></th>
-              <th colspan="3" class="text-end">Tax/Tip Price</th>
+            <tr id="tax-tip-per-person-row" class="freeze-row">
+              <th class="freeze-col"></th>
+              <th colspan="2" class="freeze-col text-end">Tax/Tip Price</th>
             </tr>
-            <tr id="total-per-person-row">
-              <th></th>
-              <th colspan="3" class="text-end">Total Price</th>
+            <tr id="total-per-person-row" class="freeze-row">
+              <th class="freeze-col"></th>
+              <th colspan="2" class="freeze-col text-end">Total Price</th>
             </tr>
-            <tr id="toggle-person-row">
-              <td></td>
-              <th>
+            <tr id="toggle-person-row" class="freeze-row">
+              <th class="freeze-col"></th>
+              <th class="freeze-col">
                 Items
                 <span class="fw-normal">(<span id="num-items">0</span>)</span>
               </th>
-              <th class="text-center">
-                <span id="item-unpaid-column-label" class="d-none">Unpaid</span>
-              </th>
-              <td></td>
+              <th class="freeze-col"></th>
             </tr>
           </thead>
           <tbody>
             <tr id="add-item-row">
-              <td></td>
-              <td>
+              <td class="freeze-col"></td>
+              <td class="freeze-col">
                 <div class="input-group flex-nowrap">
                   <input
                     type="text"
@@ -311,8 +311,7 @@
                   </button>
                 </div>
               </td>
-              <td></td>
-              <td></td>
+              <td class="freeze-col"></td>
             </tr>
           </tbody>
         </table>

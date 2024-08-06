@@ -7,7 +7,29 @@
   min-width: 3em !important;
 }
 
+#people-items-table {
+  /* Frozen rows and columns need opaque backgrounds, otherwise the content
+     under it will show as the user scrolls. */
+  --bs-table-bg: var(--bs-white);
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
 #add-person-input,
 #add-item-input {
   min-width: 7em;
+}
+
+.freeze-thead,
+.freeze-row,
+.freeze-col {
+  position: sticky;
+  /* Increase the z-index so other elements don't appear over the frozen
+     elements. This is the same as Bootstrap's z-index for sticky elements. */
+  z-index: 1020;
+}
+
+.freeze-thead {
+  /* Slightly higher in the table header. */
+  z-index: 1030;
 }
